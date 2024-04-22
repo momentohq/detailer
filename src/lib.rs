@@ -22,4 +22,4 @@
 #[deny(missing_docs)]
 mod detailer;
 
-pub use detailer::{Detailer, TimingSetting};
+pub use detailer::{DetailScopeGuard, Detailer, TimingSetting};

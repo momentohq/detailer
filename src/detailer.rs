@@ -12,6 +12,7 @@ pub struct Detailer {
     accumulated: String,
     current_indentation: Arc<AtomicUsize>,
     start: Option<Instant>,
+    soft_limit: usize,
 }
 
 /// Configure the time logging prefix of detail lines
@@ -32,25 +33,30 @@ pub enum TimingSetting {
 /// let mut detailer_at_debug = new_detailer!(Debug);
 ///
 /// let mut detailer_at_debug_without_timing = new_detailer!(Debug, WithoutTiming);
+///
+/// let mut detailer_at_debug_without_timing_limited_length = new_detailer!(Debug, WithoutTiming, 1024);
 /// ```
 #[macro_export(local_inner_macros)]
 macro_rules! new_detailer {
-    // scope!(detailer, "scope {}", "log")
+    // new_detailer!()
     () => {
-        detailer::Detailer::new(log::LevelFilter::Info, detailer::TimingSetting::WithTiming)
+        new_detailer!(Info)
     };
-    // scope!(detailer, "scope {}", "log")
+    // new_detailer!(Debug)
     ($level:tt) => {
-        detailer::Detailer::new(
-            log::LevelFilter::$level,
-            detailer::TimingSetting::WithTiming,
-        )
+        new_detailer!($level, WithTiming)
     };
-    // scope!(detailer, "scope {}", "log")
+    // new_detailer!(Debug, WithTiming)
+    // new_detailer!(Debug, WithoutTiming)
     ($level:tt, $timing_setting:tt) => {
+        new_detailer!($level, $timing_setting, 4 * 1024)
+    };
+    // new_detailer!(Debug, WithTiming, 1024)
+    ($level:tt, $timing_setting:tt, $soft_limit:expr) => {
         detailer::Detailer::new(
             log::LevelFilter::$level,
             detailer::TimingSetting::$timing_setting,
+            $soft_limit,
         )
     };
 }
@@ -123,7 +129,7 @@ impl Detailer {
     /// Create a new event Detailer logger.
     ///
     /// When dropped or flush()ed it will output its accumulated input.
-    pub fn new(level: log::LevelFilter, timing_setting: TimingSetting) -> Detailer {
+    pub fn new(level: log::LevelFilter, timing_setting: TimingSetting, limit: usize) -> Detailer {
         Detailer {
             level,
             accumulated: Default::default(),
@@ -132,6 +138,7 @@ impl Detailer {
                 TimingSetting::WithTiming => Some(Instant::now()),
                 TimingSetting::WithoutTiming => None,
             },
+            soft_limit: limit,
         }
     }
 
@@ -180,6 +187,10 @@ impl Detailer {
     /// ```
     pub fn log(&mut self, level: log::Level, message: Arguments) {
         if level <= self.level {
+            if self.soft_limit <= self.accumulated.len() {
+                log::warn!("truncated");
+                return;
+            }
             let current_indentation = self
                 .current_indentation
                 .load(std::sync::atomic::Ordering::Relaxed);
@@ -287,12 +298,15 @@ impl Drop for Detailer {
     }
 }
 
+/// When a DetailScopeGuard is dropped, the level of indentation on following
+/// `detail!()`` messages for the detailer this scope was created for is
+/// immediately decremented.
 pub struct DetailScopeGuard {
     level: Arc<AtomicUsize>,
 }
 
 impl DetailScopeGuard {
-    pub fn new(level: Arc<AtomicUsize>) -> Self {
+    fn new(level: Arc<AtomicUsize>) -> Self {
         level.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         Self { level }
     }
