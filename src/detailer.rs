@@ -294,10 +294,25 @@ impl Detailer {
 
 impl Drop for Detailer {
     fn drop(&mut self) {
-        if 0 < self.accumulated.len() {
-            self.log(self.level.to_level().unwrap_or(log::Level::Info), format_args!("dropped"));
+        if !self.accumulated.is_empty() {
+            self.log(
+                self.level.to_level().unwrap_or(log::Level::Info),
+                format_args!("dropped"),
+            );
         }
         self.flush()
+    }
+}
+
+impl Default for Detailer {
+    fn default() -> Self {
+        Self {
+            level: log::LevelFilter::Info,
+            accumulated: Default::default(),
+            current_indentation: Default::default(),
+            start: Some(Instant::now()),
+            soft_limit: 4 * 1024,
+        }
     }
 }
 
