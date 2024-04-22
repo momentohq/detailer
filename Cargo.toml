@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["momento", "kvcache"]
 description = "Dynamic workflow logging"
 readme = "README.md"
+license = "Apache-2.0"
 repository = "https://github.com/momentohq/detailer"
 homepage = "https://gomomento.com/"
 
