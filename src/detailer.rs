@@ -294,6 +294,9 @@ impl Detailer {
 
 impl Drop for Detailer {
     fn drop(&mut self) {
+        if 0 < self.accumulated.len() {
+            self.log(self.level.to_level().unwrap_or(log::Level::Info), format_args!("dropped"));
+        }
         self.flush()
     }
 }
