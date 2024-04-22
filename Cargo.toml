@@ -1,0 +1,24 @@
+[package]
+name = "detailer"
+version = "0.1.0"
+edition = "2021"
+authors = ["momento", "kvcache"]
+description = "Dynamic workflow logging"
+readme = "README.md"
+repository = "https://github.com/momentohq/detailer"
+homepage = "https://gomomento.com/"
+
+[lib]
+bench = false
+
+[[bench]]
+name = "bench_main"
+harness = false
+
+[dependencies]
+log                     = { version = "0.4" }
+
+[dev-dependencies]
+criterion               = { version = "0.5" }
+env_logger              = { version = "0.11" }
+test-log                = { version = "0.2" }
