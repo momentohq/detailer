@@ -290,6 +290,22 @@ impl Detailer {
     pub fn error(&mut self, message: Arguments) {
         self.log(log::Level::Error, message)
     }
+
+    /// Override the level for this detailer
+    ///
+    /// ```
+    /// use detailer::{Detailer, new_detailer};
+    /// use log::{Level, LevelFilter};
+    ///
+    /// let mut detailer = new_detailer!();
+    ///
+    /// detailer.debug(format_args!("{} logged", "not"));
+    /// detailer.level(log::LevelFilter::Debug);
+    /// detailer.debug(format_args!("{} logged", "is"));
+    /// ```
+    pub fn level(&mut self, level: log::LevelFilter) {
+        self.level = level;
+    }
 }
 
 impl Drop for Detailer {
