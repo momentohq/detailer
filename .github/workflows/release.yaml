@@ -13,10 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions-rs/toolchain@v1
+
+    - name: Toolchain
+      uses: dtolnay/rust-toolchain@stable
       with:
           toolchain: stable
-          override: true
+
     - uses: Swatinem/rust-cache@v2
 
     - uses: katyo/publish-crates@v2
